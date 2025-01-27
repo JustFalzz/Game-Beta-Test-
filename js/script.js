@@ -175,6 +175,48 @@ window.addEventListener("DOMContentLoaded", function () {
       timer = 0;
     }
   });
+  
+this.addEventListener("keydown", function (e) {
+    if (e.code == "Space" && !interval) {
+      interval = window.setInterval(() => {
+        timer++;
+      });
+    }
+  });
+
+  this.addEventListener("keyup", function (e) {
+    if (e.code == "Space" && interval) {
+      window.clearInterval(interval);
+      interval = null;
+      if (timer <= 4) {
+        jump(false);
+      } else if (timer >= 0) {
+        jump(true);
+      }
+      timer = 0;
+    }
+  });
+  
+this.addEventListener("touchstart", function () {
+  if (!interval) {
+    interval = window.setInterval(() => {
+      timer++;
+    });
+  }
+});
+
+this.addEventListener("touchend", function () {
+  if (interval) {
+    window.clearInterval(interval);
+    interval = null;
+    if (timer <= 4) {
+      jump(false);
+    } else {
+      jump(true);
+    }
+    timer = 0;
+  }
+});
 
   document
     .getElementById("mudah")
