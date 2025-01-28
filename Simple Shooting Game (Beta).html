@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Simple Shooting Game (Mobile)</title>
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+    }
+    #gameArea {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: black;
+    }
+    #player {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 50px;
+      background: cyan;
+      border-radius: 10px;
+    }
+    .bullet {
+      position: absolute;
+      width: 8px;
+      height: 15px;
+      background: yellow;
+    }
+    .enemy {
+      position: absolute;
+      width: 50px;
+      height: 50px;
+      background: red;
+      border-radius: 10px;
+    }
+    #score, #lives, #level, #timer {
+      position: absolute;
+      top: 20px;
+      color: white;
+      font-size: 20px;
+      z-index: 1;
+    }
+    #lives {
+      right: 20px;
+    }
+    #level {
+      left: 20px;
+    }
+    #timer {
+      position: absolute;
+      top: 20px;
+      right: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div id="gameArea">
+    <div id="player"></div>
+    <div id="score">Score: 0</div>
+    <div id="lives">Lives: 3</div>
+    <div id="level">Level: 1</div>
+    <div id="timer">Time: 60</div>
+  </div>
+
+  <script>
+    const player = document.getElementById('player');
+    const gameArea = document.getElementById('gameArea');
+    const scoreDisplay = document.getElementById('score');
+    const livesDisplay = document.getElementById('lives');
+    const levelDisplay = document.getElementById('level');
+    const timerDisplay = document.getElementById('timer');
+    
+    let bullets = [];
+    let enemies = [];
+    let score = 0;
+    let lives = 3;
+    let level = 1;
+    let timeLeft = 60;
+    let gameInterval;
+    let enemyInterval;
+    let lastShotTime = 0;
+    let startX = 0;
+    let startY = 0;
+    let swipeInProgress = false;
+    let maxEnemies = 5; // Batas jumlah musuh maksimal
+    let enemyTimeout = 0; // Untuk mengatur timeout musuh agar tidak muncul terlalu banyak
+
+    // Swipe to move player and shoot
+    gameArea.addEventListener('touchstart', (e) => {
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      swipeInProgress = true;
+    });
+
+    gameArea.addEventListener('touchmove', (e) => {
+      const currentX = e.touches[0].clientX;
+      const currentY = e.touches[0].clientY;
+      const deltaX = currentX - startX;
+      const deltaY = currentY - startY;
+
+      if (Math.abs(deltaX) > 10 || Math.abs(deltaY) > 10) {
+        movePlayer(deltaX, deltaY);
+        startX = currentX;
+        startY = currentY;
+
+        // Tembak otomatis tapi batasi tembakan
+        if (Date.now() - lastShotTime > 150) { // Dipercepat, 150ms
+          shootBullet();
+          lastShotTime = Date.now();
+        }
+      }
+    });
+
+    gameArea.addEventListener('touchend', () => {
+      swipeInProgress = false;
+    });
+
+    function movePlayer(deltaX, deltaY) {
+      const left = parseInt(window.getComputedStyle(player).left);
+      const bottom = parseInt(window.getComputedStyle(player).bottom);
+
+      const newLeft = Math.min(
+        Math.max(left + deltaX, 0),
+        gameArea.offsetWidth - player.offsetWidth
+      );
+
+      const newBottom = Math.min(
+        Math.max(bottom - deltaY, 0),
+        gameArea.offsetHeight - player.offsetHeight
+      );
+
+      player.style.left = newLeft + 'px';
+      player.style.bottom = newBottom + 'px';
+    }
+
+    // Shoot bullets automatically while swiping
+    function shootBullet() {
+      const bullet = document.createElement('div');
+      bullet.classList.add('bullet');
+      bullet.style.left = player.offsetLeft + player.offsetWidth / 2 - 4 + 'px';
+      bullet.style.bottom = parseInt(window.getComputedStyle(player).bottom) + 50 + 'px';
+      gameArea.appendChild(bullet);
+      bullets.push(bullet);
+    }
+
+    function createEnemy() {
+      if (enemies.length < maxEnemies && Date.now() - enemyTimeout > 2000) {
+        const enemy = document.createElement('div');
+        enemy.classList.add('enemy');
+        enemy.style.left = Math.random() * (gameArea.offsetWidth - 50) + 'px';
+        enemy.style.top = '0px';
+        gameArea.appendChild(enemy);
+        enemies.push(enemy);
+        enemyTimeout = Date.now();
+      }
+    }
+
+    function updateGame() {
+      bullets.forEach((bullet, index) => {
+        const bottom = parseInt(window.getComputedStyle(bullet).bottom);
+        if (bottom > gameArea.offsetHeight) {
+          bullet.remove();
+          bullets.splice(index, 1);
+        } else {
+          bullet.style.bottom = bottom + 8 + 'px'; // Kecepatan tembakan dipercepat sedikit
+        }
+      });
+
+      enemies.forEach((enemy, index) => {
+        const top = parseInt(window.getComputedStyle(enemy).top);
+        if (top > gameArea.offsetHeight) {
+          lives--;
+          enemy.remove();
+          enemies.splice(index, 1);
+        } else {
+          enemy.style.top = top + 5 + 'px';
+        }
+
+        bullets.forEach((bullet, bIndex) => {
+          if (checkCollision(bullet, enemy)) {
+            score += 10;
+            enemy.remove();
+            bullet.remove();
+            enemies.splice(index, 1);
+            bullets.splice(bIndex, 1);
+          }
+        });
+      });
+
+      scoreDisplay.textContent = `Score: ${score}`;
+      livesDisplay.textContent = `Lives: ${lives}`;
+      levelDisplay.textContent = `Level: ${level}`;
+      timerDisplay.textContent = `Time: ${timeLeft}`;
+
+      if (lives <= 0) {
+        clearInterval(gameInterval);
+        clearInterval(enemyInterval);
+        alert("Game Over! Your Score: " + score);
+        location.reload();
+      }
+
+      if (score >= level * 50) {
+        level++;
+        maxEnemies = Math.min(5 + level, 10); // Menambah maksimal musuh seiring level
+        enemyTimeout = 0; // Reset timeout saat level naik
+      }
+
+      requestAnimationFrame(updateGame);
+    }
+
+    function startTimer() {
+      gameInterval = setInterval(() => {
+        if (timeLeft > 0) {
+          timeLeft--;
+        } else {
+          clearInterval(gameInterval);
+          alert("Time's Up! Your Score: " + score);
+          location.reload();
+        }
+      }, 1000);
+    }
+
+    function checkCollision(a, b) {
+      const aRect = a.getBoundingClientRect();
+      const bRect = b.getBoundingClientRect();
+      return !(
+        aRect.top > bRect.bottom ||
+        aRect.bottom < bRect.top ||
+        aRect.left > bRect.right ||
+        aRect.right < bRect.left
+      );
+    }
+
+    startTimer();
+    enemyInterval = setInterval(createEnemy, 2000);
+    updateGame();
+  </script>
+</body>
+</html>
