@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Dino Sederhana</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+
+        canvas {
+            background-color: #fff;
+            border: 1px solid #000;
+        }
+
+        button {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #000;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            z-index: 10; /* Ensure button is above other elements */
+        }
+
+        #score {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 24px;
+            z-index: 10; /* Ensure score is above other elements */
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas" width="800" height="400"></canvas>
+    <button id="jumpButton">Lompat</button>
+    <div id="score">Skor: 0</div>
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const jumpButton = document.getElementById('jumpButton');
+        const scoreElement = document.getElementById('score');
+
+        const dinoWidth = 40;
+        const dinoHeight = 40;
+        const obstacleWidth = 20;
+        const obstacleHeight = 40;
+        const gravity = 0.5;
+        const jumpPower = -10;
+        let dinoX = 50;
+        let dinoY = canvas.height - dinoHeight;
+        let dinoVelocityY = 0;
+        let score = 0;
+        let obstacles = [];
+        let obstacleInterval = 0;
+
+        function drawDino() {
+            ctx.fillStyle = 'green';
+            ctx.fillRect(dinoX, dinoY, dinoWidth, dinoHeight);
+        }
+
+        function drawObstacle(x, y) {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(x, y, obstacleWidth, obstacleHeight);
+        }
+
+        function update() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw obstacles
+            obstacleInterval++;
+            if (obstacleInterval > 60) {
+                obstacles.push({
+                    x: canvas.width,
+                    y: canvas.height - obstacleHeight
+                });
+                obstacleInterval = 0;
+            }
+
+            obstacles = obstacles.filter(obstacle => obstacle.x > -obstacleWidth);
+            obstacles.forEach(obstacle => {
+                obstacle.x -= 5;
+                drawObstacle(obstacle.x, obstacle.y);
+
+                // Collision detection
+                if (dinoX < obstacle.x + obstacleWidth &&
+                    dinoX + dinoWidth > obstacle.x &&
+                    dinoY < obstacle.y + obstacleHeight &&
+                    dinoY + dinoHeight > obstacle.y) {
+                    alert('Game Over! Skor: ' + score);
+                    resetGame();
+                }
+            });
+
+            // Update dino position
+            dinoVelocityY += gravity;
+            dinoY += dinoVelocityY;
+            if (dinoY > canvas.height - dinoHeight) {
+                dinoY = canvas.height - dinoHeight;
+                dinoVelocityY = 0;
+            }
+
+            // Draw dino
+            drawDino();
+
+            // Update score
+            score++;
+            scoreElement.textContent = `Skor: ${score}`;
+
+            requestAnimationFrame(update);
+        }
+
+        function jump() {
+            if (dinoY === canvas.height - dinoHeight) {
+                dinoVelocityY = jumpPower;
+            }
+        }
+
+        function resetGame() {
+            dinoY = canvas.height - dinoHeight;
+            dinoVelocityY = 0;
+            obstacles = [];
+            score = 0;
+            scoreElement.textContent = `Skor: ${score}`;
+        }
+
+        jumpButton.addEventListener('click', jump);
+
+        // Improved touch event handling
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            jump();
+        }, { passive: false });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                jump();
+            }
+        });
+
+        update();
+    </script>
+</body>
+</html>

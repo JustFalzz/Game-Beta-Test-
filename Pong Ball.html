@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Tembak Bola</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #282c34;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            color: white;
+            flex-direction: column;
+        }
+
+        #menu {
+            text-align: center;
+        }
+
+        #menu button, #backButton {
+            background-color: #00FF00;
+            border: none;
+            color: white;
+            font-size: 20px;
+            padding: 20px;
+            margin: 10px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        #menu button:hover, #backButton:hover {
+            background-color: #FF4500;
+        }
+
+        #gameCanvas {
+            background-color: #fff;
+            border: 2px solid #000;
+            display: none; /* Hide canvas until the game starts */
+        }
+
+        #score {
+            position: absolute;
+            right: 20px;
+            top: 50%;
+            transform: translateY(-50%);
+            background-color: #000;
+            color: white;
+            font-size: 24px;
+            font-family: Arial, sans-serif;
+            padding: 10px;
+            border: 2px solid white;
+            border-radius: 8px;
+        }
+
+        #backButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            display: none; /* Hide back button until game starts */
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">
+        <h1>Selamat datang di Game Tembak Bola</h1>
+        <button onclick="startGame('easy')">Mudah</button>
+        <button onclick="startGame('medium')">Sedang</button>
+        <button onclick="startGame('hard')">Sulit</button>
+    </div>
+
+    <div id="gameControls">
+        <button id="backButton" onclick="goBack()">Kembali</button>
+    </div>
+
+    <div id="score">Score: 0</div>
+    <canvas id="gameCanvas" width="400" height="600"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const scoreDisplay = document.getElementById('score');
+        const menu = document.getElementById('menu');
+        const backButton = document.getElementById('backButton');
+        const gameControls = document.getElementById('gameControls');
+
+        let ballX, ballY, ballRadius, ballSpeedX, ballSpeedY;
+        let playerPaddleWidth, playerPaddleHeight, playerPaddleX;
+        let aiPaddleX, aiPaddleSpeed;
+        let score = 0;
+        let difficulty;
+
+        function startGame(selectedDifficulty) {
+            difficulty = selectedDifficulty;
+            menu.style.display = 'none'; // Hide menu
+            gameControls.style.display = 'block'; // Show game controls (back button)
+            canvas.style.display = 'block'; // Show canvas
+            backButton.style.display = 'block'; // Show back button
+            setupGame();  // Reset game on level change
+            gameLoop();
+        }
+
+        function goBack() {
+            menu.style.display = 'block'; // Show menu again
+            gameControls.style.display = 'none'; // Hide back button
+            canvas.style.display = 'none'; // Hide canvas
+            backButton.style.display = 'none'; // Hide back button
+        }
+
+        function setupGame() {
+            ballX = canvas.width / 2;
+            ballY = canvas.height / 2;
+            ballRadius = 10;
+            
+            // Reset ball speed when switching levels
+            if (difficulty === 'easy') {
+                ballSpeedX = 3;
+                ballSpeedY = 3;
+            } else if (difficulty === 'medium') {
+                ballSpeedX = 4;
+                ballSpeedY = 4;
+            } else {
+                ballSpeedX = 5;
+                ballSpeedY = 5;
+            }
+
+            playerPaddleWidth = 80;
+            playerPaddleHeight = 10;
+            playerPaddleX = (canvas.width - playerPaddleWidth) / 2;
+
+            aiPaddleX = (canvas.width - playerPaddleWidth) / 2;
+
+            // Reset AI paddle speed based on difficulty
+            if (difficulty === 'easy') {
+                aiPaddleSpeed = 1.5;
+            } else if (difficulty === 'medium') {
+                aiPaddleSpeed = 2.5;
+            } else {
+                aiPaddleSpeed = 3.5;
+            }
+
+            score = 0;
+            scoreDisplay.innerText = `Score: ${score}`;
+        }
+
+        function drawBall() {
+            ctx.beginPath();
+            ctx.arc(ballX, ballY, ballRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "#FF4500";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawPlayerPaddle() {
+            ctx.beginPath();
+            ctx.rect(playerPaddleX, canvas.height - playerPaddleHeight - 10, playerPaddleWidth, playerPaddleHeight);
+            ctx.fillStyle = "#00FF00";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function drawAiPaddle() {
+            ctx.beginPath();
+            ctx.rect(aiPaddleX, 10, playerPaddleWidth, playerPaddleHeight);
+            ctx.fillStyle = "#FF0000";
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function updateBall() {
+            ballX += ballSpeedX;
+            ballY += ballSpeedY;
+
+            if (ballX + ballRadius > canvas.width || ballX - ballRadius < 0) {
+                ballSpeedX = -ballSpeedX;
+            }
+
+            if (
+                ballY + ballRadius > canvas.height - playerPaddleHeight - 10 &&
+                ballX > playerPaddleX &&
+                ballX < playerPaddleX + playerPaddleWidth
+            ) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            if (
+                ballY - ballRadius < playerPaddleHeight + 10 &&
+                ballX > aiPaddleX &&
+                ballX < aiPaddleX + playerPaddleWidth
+            ) {
+                ballSpeedY = -ballSpeedY;
+            }
+
+            if (ballY + ballRadius > canvas.height) {
+                ballY = canvas.height / 2;
+                ballSpeedY = -ballSpeedY;
+                score--;
+            }
+
+            if (ballY - ballRadius < 0) {
+                ballY = canvas.height / 2;
+                ballSpeedY = -ballSpeedY;
+                score++;
+            }
+
+            scoreDisplay.innerText = `Score: ${score}`;
+        }
+
+        function updateAiPaddle() {
+            if (aiPaddleX + playerPaddleWidth / 2 < ballX) {
+                aiPaddleX += aiPaddleSpeed;
+            } else {
+                aiPaddleX -= aiPaddleSpeed;
+            }
+
+            aiPaddleX = Math.max(0, Math.min(canvas.width - playerPaddleWidth, aiPaddleX));
+        }
+
+        function render() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBall();
+            drawPlayerPaddle();
+            drawAiPaddle();
+        }
+
+        function update() {
+            updateBall();
+            updateAiPaddle();
+        }
+
+        function gameLoop() {
+            update();
+            render();
+            requestAnimationFrame(gameLoop);
+        }
+
+        canvas.addEventListener('mousemove', (event) => {
+            let relativeX = event.clientX - canvas.offsetLeft;
+            if (relativeX > 0 && relativeX < canvas.width) {
+                playerPaddleX = relativeX - playerPaddleWidth / 2;
+            }
+        });
+
+        canvas.addEventListener('touchmove', (event) => {
+            let touch = event.touches[0];
+            let relativeX = touch.clientX - canvas.offsetLeft;
+            if (relativeX > 0 && relativeX < canvas.width) {
+                playerPaddleX = relativeX - playerPaddleWidth / 2;
+            }
+        });
+    </script>
+</body>
+</html>
