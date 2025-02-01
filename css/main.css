@@ -1,0 +1,77 @@
+*{
+    margin: 0;
+    padding: 0;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
+
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #87ceeb;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
+    flex-direction: column;
+  }
+  #menu {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  #menu h1 {
+    font-size: 36px;
+    color: #333;
+    margin-bottom: 20px;
+  }
+  .difficulty-button {
+    padding: 15px 30px;
+    font-size: 20px;
+    margin: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    background-color: #333;
+    color: white;
+    transition: 0.3s;
+  }
+  .difficulty-button:hover {
+    background-color: #555;
+  }
+  #gameCanvas {
+    width:70%;
+    display: none;
+    background-color: #fff;
+    border: 2px solid #333;
+  }
+  #score {
+    display: none;
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    color: black;
+  }
+  .jump-button {
+    padding: 20px;
+    font-size: 24px;
+    border: none;
+    border-radius: 50%;
+    background-color: #333;
+    color: white;
+    cursor: pointer;
+    margin: 10px;
+  }
+  .jump-button:active {
+    background-color: #555;
+  }
+  .button-container {
+    display: flex;
+    justify-content: center;
+    position: absolute;
+    bottom: 30px;
+    width: 100%;
+  }
+ 
